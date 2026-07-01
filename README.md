@@ -1,6 +1,11 @@
-# alu_intern
+# ALU Intern
 
-A new Flutter project.
+Copy `.env.example` to `.env`, provide the Firebase and Google configuration,
+then run the app with:
+
+```powershell
+flutter run --dart-define-from-file=.env
+```
 
 ## Getting Started
 

@@ -43,3 +43,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Auto-generated Flutter plugin registrant (regenerated on each build)
+**/GeneratedPluginRegistrant.java
+**/GeneratedPluginRegistrant.kt
+
+# Firebase
+.env
+.env.*
+!.env.example
+firebase.json
+google-services.json
+GoogleService-Info.plist
+.firebase/
