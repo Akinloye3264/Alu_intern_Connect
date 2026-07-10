@@ -1,13 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
+/// Admin-controlled review status. In the Firebase console this is stored
+/// as a plain string on the startup's document (`startups/{uid}`) — flip it
+/// from "pending" to "approved" to unlock posting for that startup, or set
+/// it to "rejected" to deny the application.
+enum StartupVerificationStatus { pending, approved, rejected }
+
 class Startup extends Equatable {
   final String startupId;
   final String ownerUid;
   final String name;
+  final String email;
   final String description;
   final String logoUrl;
-  final bool isVerified;
+  final StartupVerificationStatus verificationStatus;
   final String category;
   final String website;
   final String registrationNumber;
@@ -17,22 +24,26 @@ class Startup extends Equatable {
     required this.startupId,
     required this.ownerUid,
     required this.name,
+    this.email = '',
     required this.description,
     this.logoUrl = '',
-    this.isVerified = false,
+    this.verificationStatus = StartupVerificationStatus.pending,
     required this.category,
     required this.website,
     required this.registrationNumber,
     required this.createdAt,
   });
 
+  bool get isVerified => verificationStatus == StartupVerificationStatus.approved;
+
   Map<String, dynamic> toMap() => {
     'startupId': startupId,
     'ownerUid': ownerUid,
     'name': name,
+    'email': email,
     'description': description,
     'logoUrl': logoUrl,
-    'isVerified': isVerified,
+    'verificationStatus': verificationStatus.name,
     'category': category,
     'website': website,
     'registrationNumber': registrationNumber,
@@ -43,9 +54,13 @@ class Startup extends Equatable {
     startupId: map['startupId'] ?? '',
     ownerUid: map['ownerUid'] ?? '',
     name: map['name'] ?? '',
+    email: map['email'] ?? '',
     description: map['description'] ?? '',
     logoUrl: map['logoUrl'] ?? '',
-    isVerified: map['isVerified'] ?? false,
+    verificationStatus: StartupVerificationStatus.values.firstWhere(
+      (s) => s.name == map['verificationStatus'],
+      orElse: () => StartupVerificationStatus.pending,
+    ),
     category: map['category'] ?? 'Other',
     website: map['website'] ?? '',
     registrationNumber: map['registrationNumber'] ?? '',
@@ -57,9 +72,10 @@ class Startup extends Equatable {
     startupId,
     ownerUid,
     name,
+    email,
     description,
     logoUrl,
-    isVerified,
+    verificationStatus,
     category,
     website,
     registrationNumber,

@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
 
+/// Dynamic color palette. The `static const` fields never change between
+/// themes; the getters below them track [isDark] (kept in sync by
+/// `ThemeCubit`) so existing call sites (`AppColors.textPrimary`, etc.)
+/// automatically follow the active theme without being rewritten.
 class AppColors {
-  static const background = Color(0xFF0E0E12);
-  static const surface = Color(0xFF1A1A22);
-  static const surfaceAlt = Color(0xFF24242E);
+  static bool isDark = true;
+
+  static Color get background =>
+      isDark ? const Color(0xFF0E0E12) : const Color(0xFFF7F7FA);
+  static Color get surface =>
+      isDark ? const Color(0xFF1A1A22) : const Color(0xFFFFFFFF);
+  static Color get surfaceAlt =>
+      isDark ? const Color(0xFF24242E) : const Color(0xFFEEEEF3);
   static const primary = Color(0xFF7C5CFC);
-  static const primarySoft = Color(0xFF2A2440);
+  static Color get primarySoft =>
+      isDark ? const Color(0xFF2A2440) : const Color(0xFFECE7FE);
   static const accent = Color(0xFFB9FF66);
-  static const textPrimary = Color(0xFFF4F4F6);
-  static const textSecondary = Color(0xFF9A9AA8);
-  static const border = Color(0xFF2E2E3A);
+  static Color get textPrimary =>
+      isDark ? const Color(0xFFF4F4F6) : const Color(0xFF16161C);
+  static Color get textSecondary =>
+      isDark ? const Color(0xFF9A9AA8) : const Color(0xFF62626E);
+  static Color get border =>
+      isDark ? const Color(0xFF2E2E3A) : const Color(0xFFE1E1E9);
   static const success = Color(0xFF4ADE80);
   static const danger = Color(0xFFF87171);
 }
@@ -29,35 +42,74 @@ class AppSpacing {
 }
 
 class AppTheme {
-  static ThemeData get dark {
-    final base = ThemeData.dark(useMaterial3: true);
+  static ThemeData get dark => _build(
+    brightness: Brightness.dark,
+    background: const Color(0xFF0E0E12),
+    surface: const Color(0xFF1A1A22),
+    surfaceAlt: const Color(0xFF24242E),
+    primarySoft: const Color(0xFF2A2440),
+    textPrimary: const Color(0xFFF4F4F6),
+    textSecondary: const Color(0xFF9A9AA8),
+    border: const Color(0xFF2E2E3A),
+  );
+
+  static ThemeData get light => _build(
+    brightness: Brightness.light,
+    background: const Color(0xFFF7F7FA),
+    surface: const Color(0xFFFFFFFF),
+    surfaceAlt: const Color(0xFFEEEEF3),
+    primarySoft: const Color(0xFFECE7FE),
+    textPrimary: const Color(0xFF16161C),
+    textSecondary: const Color(0xFF62626E),
+    border: const Color(0xFFE1E1E9),
+  );
+
+  static ThemeData _build({
+    required Brightness brightness,
+    required Color background,
+    required Color surface,
+    required Color surfaceAlt,
+    required Color primarySoft,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color border,
+  }) {
+    final base = ThemeData(brightness: brightness, useMaterial3: true);
 
     return base.copyWith(
-      scaffoldBackgroundColor: AppColors.background,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        surface: AppColors.surface,
-        onPrimary: Colors.white,
-        onSurface: AppColors.textPrimary,
-        error: AppColors.danger,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.background,
+      scaffoldBackgroundColor: background,
+      colorScheme: brightness == Brightness.dark
+          ? ColorScheme.dark(
+              primary: AppColors.primary,
+              surface: surface,
+              onPrimary: Colors.white,
+              onSurface: textPrimary,
+              error: AppColors.danger,
+            )
+          : ColorScheme.light(
+              primary: AppColors.primary,
+              surface: surface,
+              onPrimary: Colors.white,
+              onSurface: textPrimary,
+              error: AppColors.danger,
+            ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: background,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          color: AppColors.textPrimary,
+          color: textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w700,
         ),
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(color: textPrimary),
       ),
       textTheme: base.textTheme.apply(
-        bodyColor: AppColors.textPrimary,
-        displayColor: AppColors.textPrimary,
+        bodyColor: textPrimary,
+        displayColor: textPrimary,
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -65,16 +117,16 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceAlt,
-        hintStyle: const TextStyle(color: AppColors.textSecondary),
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
+        fillColor: surfaceAlt,
+        hintStyle: TextStyle(color: textSecondary),
+        labelStyle: TextStyle(color: textSecondary),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.md,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -97,24 +149,24 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.border),
+          foregroundColor: textPrimary,
+          side: BorderSide(color: border),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
       ),
       chipTheme: base.chipTheme.copyWith(
-        backgroundColor: AppColors.surfaceAlt,
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
+        backgroundColor: surfaceAlt,
+        labelStyle: TextStyle(color: textSecondary),
         side: BorderSide.none,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       ),
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: AppColors.surfaceAlt,
-        contentTextStyle: TextStyle(color: AppColors.textPrimary),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: surfaceAlt,
+        contentTextStyle: TextStyle(color: textPrimary),
         behavior: SnackBarBehavior.floating,
       ),
     );

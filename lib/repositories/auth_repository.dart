@@ -37,11 +37,32 @@ class AuthRepository {
         'Startup website and registration number are required.',
       );
     }
-    final cred = await _auth.createUserWithEmailAndPassword(
-      email: normalizedEmail,
-      password: password,
-    );
-    await cred.user?.sendEmailVerification();
+    UserCredential cred;
+    try {
+      cred = await _auth.createUserWithEmailAndPassword(
+        email: normalizedEmail,
+        password: password,
+      );
+    } on FirebaseAuthException catch (error) {
+      if (error.code != 'email-already-in-use') rethrow;
+      // Deleting only the Firestore profile leaves the Firebase Auth account.
+      // Re-authenticate that account and rebuild its profile when the password
+      // supplied by its owner is valid.
+      cred = await _auth.signInWithEmailAndPassword(
+        email: normalizedEmail,
+        password: password,
+      );
+      final existingProfile = await _db
+          .collection(FirestorePaths.users)
+          .doc(cred.user!.uid)
+          .get();
+      if (existingProfile.exists) {
+        throw FirebaseAuthException(
+          code: 'email-already-in-use',
+          message: 'That email is already registered. Please sign in instead.',
+        );
+      }
+    }
     final uid = cred.user!.uid;
 
     final appUser = AppUser(
@@ -59,6 +80,7 @@ class AuthRepository {
         startupId: uid,
         ownerUid: uid,
         name: fullName.trim(),
+        email: normalizedEmail,
         description: '',
         category: 'Other',
         website: startupWebsite.trim(),
@@ -76,7 +98,7 @@ class AuthRepository {
 
   Future<void> signIn({required String email, required String password}) async {
     await _auth.signInWithEmailAndPassword(
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       password: password,
     );
   }
@@ -138,8 +160,20 @@ class AuthRepository {
   );
 
   Future<void> signOut() async {
-    await GoogleSignIn().signOut();
+    final signedInWithGoogle = _auth.currentUser?.providerData.any(
+      (provider) => provider.providerId == 'google.com',
+    ) ?? false;
     await _auth.signOut();
+    // A user may have signed in with email/password, and the Google plugin can
+    // also be unavailable on some platforms. Neither case should prevent the
+    // Firebase session from being closed.
+    if (signedInWithGoogle) {
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {
+        // Firebase Auth is the source of truth for the app session.
+      }
+    }
   }
 
   Future<AppUser?> fetchUserProfile(String uid) async {
@@ -148,19 +182,19 @@ class AuthRepository {
     return AppUser.fromMap(doc.data()!);
   }
 
-  Future<bool> isStartupVerified(String uid) async {
+  Future<StartupVerificationStatus> getStartupVerificationStatus(
+    String uid,
+  ) async {
     final doc = await _db.collection(FirestorePaths.startups).doc(uid).get();
-    return doc.exists && doc.data()?['isVerified'] == true;
+    if (!doc.exists) return StartupVerificationStatus.pending;
+    return StartupVerificationStatus.values.firstWhere(
+      (s) => s.name == doc.data()?['verificationStatus'],
+      orElse: () => StartupVerificationStatus.pending,
+    );
   }
 
-  bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
-
-  Future<void> resendVerificationEmail() async {
-    await _auth.currentUser?.sendEmailVerification();
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email.trim().toLowerCase());
   }
 
-  Future<bool> refreshAndCheckVerified() async {
-    await _auth.currentUser?.reload();
-    return _auth.currentUser?.emailVerified ?? false;
-  }
 }

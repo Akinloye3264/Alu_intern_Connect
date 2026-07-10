@@ -2,12 +2,14 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../models/app_user.dart';
+import '../../../models/startup.dart';
 import '../../../repositories/auth_repository.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repo;
   StreamSubscription<User?>? _authSub;
+  int _authEpoch = 0;
 
   AuthCubit(this._repo) : super(AuthInitial()) {
     _listenToAuthChanges();
@@ -16,12 +18,22 @@ class AuthCubit extends Cubit<AuthState> {
   void _listenToAuthChanges() {
     _authSub = _repo.authStateChanges.listen((firebaseUser) async {
       if (firebaseUser == null) {
+        _authEpoch++;
         emit(Unauthenticated());
       } else {
+        final epoch = ++_authEpoch;
         try {
-          await _resolveSignedInUser(firebaseUser);
+          await _resolveSignedInUser(firebaseUser, epoch);
         } catch (_) {
-          emit(Unauthenticated());
+          if (_repo.currentUser == null) {
+            emit(Unauthenticated());
+            return;
+          }
+          emit(
+            const AuthError(
+              'Signed in, but your profile could not be loaded. Please try again.',
+            ),
+          );
         }
       }
     });
@@ -45,20 +57,27 @@ class AuthCubit extends Cubit<AuthState> {
         startupWebsite: startupWebsite,
         registrationNumber: registrationNumber,
       );
-      emit(EmailVerificationRequired(appUser.email));
+      emit(Authenticated(appUser));
     } on FirebaseAuthException catch (e) {
       emit(AuthError(_mapError(e)));
     } on ArgumentError catch (e) {
       emit(AuthError(e.message?.toString() ?? 'Invalid account details.'));
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(const AuthError('Sign-up incomplete. Please try again.'));
     }
   }
 
   Future<void> signIn({required String email, required String password}) async {
-    emit(AuthLoading());
+    final epoch = ++_authEpoch;
+    emit(AuthLoginLoading());
     try {
       await _repo.signIn(email: email, password: password);
+      final user = _repo.currentUser;
+      if (user == null) {
+        emit(const AuthError('Sign-in did not complete. Please try again.'));
+        return;
+      }
+      await _resolveSignedInUser(user, epoch);
     } on FirebaseAuthException catch (e) {
       emit(AuthError(_mapError(e)));
     } catch (e) {
@@ -67,27 +86,37 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> signInWithGoogle() async {
-    emit(AuthLoading());
+    emit(AuthLoginLoading());
     try {
       final result = await _repo.signInWithGoogle();
       if (result.user.uid.isEmpty) {
         emit(Unauthenticated());
         return;
       }
-      if (result.isNewUser) {
-        emit(NeedsRoleSelection(result.user));
+      final existingProfile = await _repo.fetchUserProfile(result.user.uid);
+      if (existingProfile == null) {
+        final createdProfile = await _repo.completeGoogleSignUp(
+          result.user,
+          UserRole.student,
+        );
+        emit(Authenticated(createdProfile));
       } else {
         final firebaseUser = _repo.currentUser;
         if (firebaseUser == null) {
           emit(Unauthenticated());
         } else {
-          await _resolveSignedInUser(firebaseUser);
+          await _resolveSignedInUser(firebaseUser, _authEpoch);
         }
       }
     } on FirebaseAuthException catch (e) {
       emit(AuthError(_mapError(e)));
+    } on ArgumentError catch (e) {
+      await _repo.signOut();
+      emit(
+        AuthError(e.message?.toString() ?? 'Google sign-in is not allowed.'),
+      );
     } catch (e) {
-      emit(const AuthError('Google sign-in failed. Please try again.'));
+      emit(AuthError('Google sign-in failed: $e'));
     }
   }
 
@@ -101,50 +130,67 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  Future<void> signOut() => _repo.signOut();
-
-  Future<void> resendVerificationEmail() async {
-    await _repo.resendVerificationEmail();
+  Future<void> signOut() async {
+    _authEpoch++;
+    // Make logout immediately authoritative in the UI. Any older profile
+    // request is invalidated by the epoch change above.
+    emit(Unauthenticated());
+    try {
+      await _repo.signOut();
+    } catch (_) {
+      if (_repo.currentUser != null) {
+        emit(const AuthError('Could not sign out. Please try again.'));
+      }
+    }
   }
 
   Future<void> checkVerificationStatus() async {
+    final user = _repo.currentUser;
+    if (user == null) {
+      emit(Unauthenticated());
+      return;
+    }
     emit(AuthLoading());
     try {
-      await _repo.refreshAndCheckVerified();
-      final user = _repo.currentUser;
-      if (user == null) {
-        emit(Unauthenticated());
-      } else {
-        await _resolveSignedInUser(user);
-      }
+      await _resolveSignedInUser(user, _authEpoch);
     } catch (_) {
-      emit(const AuthError('Could not check verification status.'));
+      emit(const AuthError('Could not refresh the approval status.'));
     }
   }
 
   Future<void> refreshProfile() async {
     final user = _repo.currentUser;
-    if (user != null) await _resolveSignedInUser(user);
+    if (user != null) await _resolveSignedInUser(user, _authEpoch);
   }
 
-  Future<void> _resolveSignedInUser(User firebaseUser) async {
+  Future<void> _resolveSignedInUser(User firebaseUser, int epoch) async {
     await firebaseUser.reload();
-    final refreshed = _repo.currentUser ?? firebaseUser;
-    if (!refreshed.emailVerified) {
-      emit(EmailVerificationRequired(refreshed.email ?? ''));
-      return;
-    }
+    final refreshed = _repo.currentUser;
+    if (!_isCurrentAuthRequest(firebaseUser, epoch) || refreshed == null) return;
     final profile = await _repo.fetchUserProfile(refreshed.uid);
+    if (!_isCurrentAuthRequest(firebaseUser, epoch)) return;
     if (profile == null) {
-      emit(Unauthenticated());
+      emit(
+        const AuthError(
+          'Your account is signed in, but its app profile is missing.',
+        ),
+      );
       return;
     }
-    if (profile.role == UserRole.startup &&
-        !await _repo.isStartupVerified(profile.uid)) {
-      emit(StartupVerificationPending(profile));
-      return;
+    if (profile.role == UserRole.startup) {
+      final status = await _repo.getStartupVerificationStatus(profile.uid);
+      if (!_isCurrentAuthRequest(firebaseUser, epoch)) return;
+      if (status != StartupVerificationStatus.approved) {
+        emit(StartupVerificationPending(profile, status));
+        return;
+      }
     }
+    if (!_isCurrentAuthRequest(firebaseUser, epoch)) return;
     emit(Authenticated(profile));
+  }
+
+  bool _isCurrentAuthRequest(User user, int epoch) {
+    return epoch == _authEpoch && _repo.currentUser?.uid == user.uid;
   }
 
   String _mapError(FirebaseAuthException e) {
@@ -159,6 +205,12 @@ class AuthCubit extends Cubit<AuthState> {
       case 'wrong-password':
       case 'invalid-credential':
         return 'Incorrect email or password.';
+      case 'user-disabled':
+        return 'This account has been disabled. Contact support.';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Wait a moment or reset your password.';
+      case 'network-request-failed':
+        return 'No internet connection. Check your network and try again.';
       default:
         return e.message ?? 'Authentication failed.';
     }

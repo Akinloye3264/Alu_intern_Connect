@@ -21,6 +21,17 @@ class ApplicationCubit extends Cubit<ApplicationState> {
         );
   }
 
+  void loadForOpportunity(String opportunityId) {
+    emit(ApplicationLoading());
+    _sub?.cancel();
+    _sub = _repo
+        .watchApplicantsForOpportunity(opportunityId)
+        .listen(
+          (apps) => emit(ApplicationLoaded(apps)),
+          onError: (e) => emit(ApplicationError(e.toString())),
+        );
+  }
+
   Future<void> checkApplied(String studentUid, String opportunityId) async {
     try {
       final already = await _repo.hasApplied(studentUid, opportunityId);

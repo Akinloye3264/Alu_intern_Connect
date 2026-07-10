@@ -72,7 +72,7 @@ class _OpportunityCardState extends State<OpportunityCard> {
                     children: [
                       Text(
                         o.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
@@ -81,7 +81,7 @@ class _OpportunityCardState extends State<OpportunityCard> {
                       const SizedBox(height: 2),
                       Text(
                         o.startupName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
                         ),
@@ -181,7 +181,7 @@ class _OpportunityCardState extends State<OpportunityCard> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
             ),

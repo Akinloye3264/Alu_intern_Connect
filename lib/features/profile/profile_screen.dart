@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:file_picker/file_picker.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/theme_cubit.dart';
 import '../../../models/app_user.dart';
 import '../../../models/application.dart';
 import '../../../repositories/application_repository.dart';
@@ -22,20 +22,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final TextEditingController _bioCtrl;
   final _profileRepo = ProfileRepository();
   bool _saving = false;
-  bool _uploadingResume = false;
-  bool _uploadingIdentity = false;
-  late String _resumeUrl;
-  late String _resumeFileName;
-  late String _identityImageUrl;
 
   @override
   void initState() {
     super.initState();
     _skills = List<String>.from(widget.user.skills);
     _bioCtrl = TextEditingController(text: widget.user.bio);
-    _resumeUrl = widget.user.resumeUrl;
-    _resumeFileName = widget.user.resumeFileName;
-    _identityImageUrl = widget.user.identityImageUrl;
   }
 
   @override
@@ -93,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final u = widget.user;
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Profile',
           style: TextStyle(
             color: AppColors.textPrimary,
@@ -103,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: AppColors.background,
         actions: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.logout_rounded,
               color: AppColors.textSecondary,
             ),
@@ -121,54 +113,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Center(
                     child: Column(
                       children: [
-                        Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 48,
-                              backgroundColor: AppColors.primarySoft,
-                              backgroundImage: u.photoUrl.isNotEmpty
-                                  ? NetworkImage(u.photoUrl)
-                                  : null,
-                              child: u.photoUrl.isEmpty
-                                  ? Text(
-                                      u.fullName.isNotEmpty
-                                          ? u.fullName[0].toUpperCase()
-                                          : '?',
-                                      style: const TextStyle(
-                                        fontSize: 36,
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.background,
-                                    width: 2,
+                        CircleAvatar(
+                          radius: 48,
+                          backgroundColor: AppColors.primarySoft,
+                          backgroundImage: u.photoUrl.isNotEmpty
+                              ? NetworkImage(u.photoUrl)
+                              : null,
+                          child: u.photoUrl.isEmpty
+                              ? Text(
+                                  u.fullName.isNotEmpty
+                                      ? u.fullName[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 36,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                ),
-                                child: const Icon(
-                                  Icons.edit_rounded,
-                                  size: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
+                                )
+                              : null,
                         ),
                         const SizedBox(height: 12),
                         Text(
                           u.fullName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
@@ -177,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 4),
                         Text(
                           u.email,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
@@ -259,9 +226,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   children: [
                     _detailRow(Icons.person_outline, 'Full name', u.fullName),
-                    const Divider(color: AppColors.border),
+                    Divider(color: AppColors.border),
                     _detailRow(Icons.email_outlined, 'Email address', u.email),
-                    const Divider(color: AppColors.border),
+                    Divider(color: AppColors.border),
                     _detailRow(
                       Icons.badge_outlined,
                       'Account type',
@@ -271,12 +238,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
               const SizedBox(height: AppSpacing.lg),
+              BlocBuilder<ThemeCubit, ThemeMode>(
+                builder: (context, mode) {
+                  final isDark = mode == ThemeMode.dark;
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: SwitchListTile(
+                      key: const Key('dark_mode_switch'),
+                      value: isDark,
+                      onChanged: (_) => context.read<ThemeCubit>().toggle(),
+                      activeThumbColor: AppColors.primary,
+                      secondary: Icon(
+                        isDark
+                            ? Icons.dark_mode_outlined
+                            : Icons.light_mode_outlined,
+                        color: AppColors.primary,
+                      ),
+                      title: Text(
+                        'Dark mode',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        isDark ? 'On' : 'Off',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
+              const SizedBox(height: AppSpacing.lg),
               _sectionLabel('Bio'),
               const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: _bioCtrl,
                 maxLines: 3,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                   hintText: 'Tell startups a bit about yourself',
                 ),
@@ -290,35 +296,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onRemove: (s) => setState(() => _skills.remove(s)),
               ).animate().fadeIn(delay: 150.ms, duration: 400.ms),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Tap × to remove a skill. Powers recommendations on your feed.',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _sectionLabel('Documents'),
-              const SizedBox(height: AppSpacing.sm),
-              _uploadCard(
-                icon: Icons.description_outlined,
-                title: 'Resume',
-                subtitle: _resumeUrl.isEmpty
-                    ? 'Required · PDF, DOC or DOCX · max 10 MB'
-                    : _resumeFileName,
-                complete: _resumeUrl.isNotEmpty,
-                loading: _uploadingResume,
-                buttonLabel: _resumeUrl.isEmpty ? 'Upload' : 'Replace',
-                onPressed: _pickResume,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _uploadCard(
-                icon: Icons.verified_user_outlined,
-                title: 'Identity image',
-                subtitle: _identityImageUrl.isEmpty
-                    ? 'Optional, but recommended · JPG or PNG · max 5 MB'
-                    : 'Identity image uploaded',
-                complete: _identityImageUrl.isNotEmpty,
-                loading: _uploadingIdentity,
-                buttonLabel: _identityImageUrl.isEmpty ? 'Upload' : 'Replace',
-                onPressed: _pickIdentityImage,
               ),
               const SizedBox(height: AppSpacing.xl),
               SizedBox(
@@ -375,157 +355,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _sectionLabel(String label) => Text(
     label,
-    style: const TextStyle(
+    style: TextStyle(
       fontWeight: FontWeight.w700,
       fontSize: 14,
       color: AppColors.textSecondary,
       letterSpacing: 0.5,
     ),
   );
-
-  Widget _uploadCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool complete,
-    required bool loading,
-    required String buttonLabel,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: complete ? AppColors.success : AppColors.border,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: complete
-                  ? AppColors.success.withValues(alpha: 0.12)
-                  : AppColors.primarySoft,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Icon(
-              complete ? Icons.check_rounded : icon,
-              color: complete ? AppColors.success : AppColors.primary,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          if (loading)
-            const SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            )
-          else
-            TextButton(onPressed: onPressed, child: Text(buttonLabel)),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _pickResume() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx'],
-      withData: true,
-    );
-    if (result == null) return;
-    final file = result.files.single;
-    if (file.size > 10 * 1024 * 1024) {
-      _showMessage('Resume must be 10 MB or smaller.', isError: true);
-      return;
-    }
-    if (file.bytes == null) {
-      _showMessage('Could not read that file.', isError: true);
-      return;
-    }
-    setState(() => _uploadingResume = true);
-    try {
-      final url = await _profileRepo.uploadResume(
-        uid: widget.user.uid,
-        fileName: file.name,
-        bytes: file.bytes!,
-      );
-      if (!mounted) return;
-      setState(() {
-        _resumeUrl = url;
-        _resumeFileName = file.name;
-      });
-      _showMessage('Resume uploaded.');
-      await context.read<AuthCubit>().refreshProfile();
-    } catch (_) {
-      _showMessage('Resume upload failed. Try again.', isError: true);
-    } finally {
-      if (mounted) setState(() => _uploadingResume = false);
-    }
-  }
-
-  Future<void> _pickIdentityImage() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png'],
-      withData: true,
-    );
-    if (result == null) return;
-    final file = result.files.single;
-    if (file.size > 5 * 1024 * 1024) {
-      _showMessage('Identity image must be 5 MB or smaller.', isError: true);
-      return;
-    }
-    if (file.bytes == null) {
-      _showMessage('Could not read that image.', isError: true);
-      return;
-    }
-    setState(() => _uploadingIdentity = true);
-    try {
-      final url = await _profileRepo.uploadIdentityImage(
-        uid: widget.user.uid,
-        fileName: file.name,
-        bytes: file.bytes!,
-      );
-      if (!mounted) return;
-      setState(() => _identityImageUrl = url);
-      _showMessage('Identity image uploaded.');
-      await context.read<AuthCubit>().refreshProfile();
-    } catch (_) {
-      _showMessage('Identity image upload failed. Try again.', isError: true);
-    } finally {
-      if (mounted) setState(() => _uploadingIdentity = false);
-    }
-  }
 
   void _showMessage(String message, {bool isError = false}) {
     if (!mounted) return;
@@ -545,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -554,7 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 3),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
             ),
@@ -583,7 +419,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 11,
                 ),
@@ -593,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
@@ -624,11 +460,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (shouldLogout == true && mounted) {
-      context.read<AuthCubit>().signOut();
+      final signOut = context.read<AuthCubit>().signOut();
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      await signOut;
     }
   }
 }
-
 class _SkillChipsInput extends StatefulWidget {
   final List<String> skills;
   final void Function(String skill) onAdd;
@@ -708,7 +545,7 @@ class _SkillChipsInputState extends State<_SkillChipsInput> {
                 child: TextField(
                   controller: _ctrl,
                   focusNode: _focus,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 14,
                   ),

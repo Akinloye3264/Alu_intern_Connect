@@ -53,7 +53,7 @@ class _SignupScreenState extends State<SignupScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_rounded,
             color: AppColors.textPrimary,
           ),
@@ -76,7 +76,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               );
           }
-          if (state is Authenticated || state is EmailVerificationRequired) {
+          if (state is Authenticated) {
             Navigator.of(context).popUntil((r) => r.isFirst);
           }
         },
@@ -100,12 +100,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       .fadeIn(duration: 400.ms)
                       .slideY(begin: -0.1, end: 0),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Join the ALU intern network',
                     style: TextStyle(color: AppColors.textSecondary),
                   ).animate().fadeIn(delay: 80.ms, duration: 400.ms),
                   const SizedBox(height: 32),
-                  const Text(
+                  Text(
                     'I am a...',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
@@ -135,12 +135,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 24),
                   TextFormField(
                         controller: _nameCtrl,
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
                           labelText: _role == UserRole.startup
                               ? 'Startup / your name'
                               : 'Full name',
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.person_outline,
                             color: AppColors.textSecondary,
                           ),
@@ -154,8 +154,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   TextFormField(
                         controller: _emailCtrl,
                         keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(color: AppColors.textPrimary),
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
                           labelText: 'Email',
                           prefixIcon: Icon(
                             Icons.email_outlined,
@@ -174,8 +174,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     TextFormField(
                       controller: _websiteCtrl,
                       keyboardType: TextInputType.url,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: const InputDecoration(
+                      style: TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
                         labelText: 'Company website',
                         hintText: 'https://example.com',
                         prefixIcon: Icon(
@@ -188,8 +188,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _registrationCtrl,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: const InputDecoration(
+                      style: TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
                         labelText: 'Company registration number',
                         prefixIcon: Icon(
                           Icons.badge_outlined,
@@ -204,10 +204,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   TextFormField(
                         controller: _passwordCtrl,
                         obscureText: _obscurePassword,
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.lock_outline,
                             color: AppColors.textSecondary,
                           ),

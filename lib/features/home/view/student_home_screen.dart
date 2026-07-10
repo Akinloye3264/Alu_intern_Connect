@@ -8,7 +8,6 @@ import '../../../core/widgets/opportunity_card.dart';
 import '../../../models/app_user.dart';
 import '../../../models/opportunity.dart';
 import '../../../repositories/opportunity_repository.dart';
-import '../../../repositories/auth_repository.dart';
 import '../../opportunities/cubit/opportunity_cubit.dart';
 import '../../opportunities/cubit/opportunity_state.dart';
 import '../../opportunities/view/opportunity_detail_screen.dart';
@@ -28,11 +27,9 @@ class StudentHomeScreen extends StatefulWidget {
 }
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
-  final _authRepo = AuthRepository();
   String _search = '';
   String _filterCategory = 'All';
   String _filterLocation = 'All';
-  bool _verified = true;
 
   static const _categories = [
     'All',
@@ -52,17 +49,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     'Operations': Icons.settings_suggest_outlined,
     'Other': Icons.grid_view_rounded,
   };
-
-  @override
-  void initState() {
-    super.initState();
-    _verified = _authRepo.isEmailVerified;
-  }
-
-  Future<void> _recheckVerified() async {
-    final v = await _authRepo.refreshAndCheckVerified();
-    if (mounted) setState(() => _verified = v);
-  }
 
   List<Opportunity> _applyFilters(List<Opportunity> list) {
     return list.where((o) {
@@ -89,11 +75,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(child: _buildHeader(context)),
-              if (!_verified)
-                SliverToBoxAdapter(child: _buildVerificationBanner()),
-              if (widget.user.skills.isEmpty ||
-                  widget.user.resumeUrl.isEmpty ||
-                  widget.user.identityImageUrl.isEmpty)
+              if (widget.user.skills.isEmpty)
                 SliverToBoxAdapter(child: _buildProfileCompletionBanner()),
               SliverToBoxAdapter(child: _buildSearchBar()),
               SliverToBoxAdapter(child: _buildCategoryBrowse()),
@@ -107,7 +89,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.wifi_off_rounded,
                               size: 48,
                               color: AppColors.textSecondary,
@@ -115,7 +97,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             const SizedBox(height: 12),
                             Text(
                               state.message,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -134,13 +116,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.search_off_rounded,
                               size: 48,
                               color: AppColors.textSecondary,
                             ),
                             const SizedBox(height: 12),
-                            const Text(
+                            Text(
                               'No opportunities found',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
@@ -149,7 +131,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
+                            Text(
                               'Try adjusting your filters',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
@@ -249,78 +231,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
-  Widget _buildVerificationBanner() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.sm,
-      ),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.primary),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.mark_email_unread_outlined,
-            color: AppColors.primary,
-            size: 20,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          const Expanded(
-            child: Text(
-              'Verify your email to secure your account.',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              await _authRepo.resendVerificationEmail();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Verification email sent')),
-                );
-              }
-            },
-            child: const Text('Resend', style: TextStyle(fontSize: 12)),
-          ),
-          TextButton(
-            onPressed: _recheckVerified,
-            child: const Text("I've done it", style: TextStyle(fontSize: 12)),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 80.ms, duration: 400.ms);
-  }
-
   Widget _buildProfileCompletionBanner() {
-    final u = widget.user;
-    final missingRequired = <String>[
-      if (u.skills.isEmpty) 'skills',
-      if (u.resumeUrl.isEmpty) 'resume',
-    ];
-
-    final IconData icon;
-    final Color color;
-    final String text;
-
-    if (missingRequired.isNotEmpty) {
-      icon = Icons.assignment_ind_outlined;
-      color = const Color(0xFFF59E0B);
-      text = missingRequired.length == 2
-          ? 'Add your skills and upload a resume to start applying.'
-          : missingRequired.first == 'skills'
-              ? 'Add your skills to start applying to opportunities.'
-              : 'Upload your resume to start applying to opportunities.';
-    } else {
-      icon = Icons.verified_user_outlined;
-      color = AppColors.primary;
-      text = 'Recommended: Add your identity image for a stronger profile.';
-    }
+    const icon = Icons.assignment_ind_outlined;
+    const color = Color(0xFFF59E0B);
+    const text = 'Add your skills so startups can find the right fit for you.';
 
     return Container(
       margin: const EdgeInsets.fromLTRB(
@@ -342,7 +256,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
             ),
           ),
           TextButton(
@@ -377,7 +291,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     Flexible(
                       child: Text(
                         'Hello, $firstName',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
@@ -392,7 +306,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Find your next opportunity',
                   style: TextStyle(
                     color: AppColors.textSecondary,
@@ -443,16 +357,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       ),
       child: TextField(
         onChanged: (v) => setState(() => _search = v),
-        style: const TextStyle(color: AppColors.textPrimary),
+        style: TextStyle(color: AppColors.textPrimary),
         decoration: InputDecoration(
           hintText: 'Search roles, startups...',
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search_rounded,
             color: AppColors.textSecondary,
           ),
           suffixIcon: _search.isNotEmpty
               ? IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.clear_rounded,
                     color: AppColors.textSecondary,
                     size: 18,
@@ -497,7 +411,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             ),
           ),
           const SizedBox(width: 4),
-          const Text(
+          Text(
             '|',
             style: TextStyle(color: AppColors.border, fontSize: 18),
           ),
@@ -525,7 +439,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
               'Browse by category',
@@ -618,7 +532,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               ],
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -628,7 +542,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           ),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),

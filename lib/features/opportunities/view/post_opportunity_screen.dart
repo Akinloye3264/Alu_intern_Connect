@@ -152,7 +152,7 @@ class _PostOpportunityScreenState extends State<PostOpportunityScreen> {
                   validator: (v) => Validators.notEmpty(v, 'Skills'),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                const Text(
+                Text(
                   'Skills are used to recommend this to matching students.',
                   style: TextStyle(
                     color: AppColors.textSecondary,

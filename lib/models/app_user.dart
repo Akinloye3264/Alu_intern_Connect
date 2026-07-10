@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
-enum UserRole { student, startup }
+enum UserRole { student, startup, admin }
 
 class AppUser extends Equatable {
   final String uid;

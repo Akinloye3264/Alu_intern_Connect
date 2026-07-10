@@ -5,6 +5,7 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/cubit/auth_state.dart';
 import 'student_shell.dart';
 import 'startup_home_screen.dart';
+import '../../admin/view/admin_startups_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,9 +20,11 @@ class HomeScreen extends StatelessWidget {
           );
         }
         final user = state.user;
-        return user.role == UserRole.startup
-            ? StartupHomeScreen(user: user)
-            : StudentShell(user: user);
+        return switch (user.role) {
+          UserRole.admin => AdminStartupsScreen(user: user),
+          UserRole.startup => StartupHomeScreen(user: user),
+          UserRole.student => StudentShell(user: user),
+        };
       },
     );
   }

@@ -21,7 +21,7 @@ class MyApplicationsScreen extends StatelessWidget {
         length: 5,
         child: Scaffold(
           appBar: AppBar(
-            title: const Text(
+            title: Text(
               'My Applications',
               style: TextStyle(
                 color: AppColors.textPrimary,
@@ -55,7 +55,7 @@ class MyApplicationsScreen extends StatelessWidget {
                 return Center(
                   child: Text(
                     state.message,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                 );
               }
@@ -82,13 +82,13 @@ class MyApplicationsScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.assignment_outlined,
               size: 48,
               color: AppColors.textSecondary,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Nothing here yet',
               style: TextStyle(
                 color: AppColors.textPrimary,
@@ -97,7 +97,7 @@ class MyApplicationsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Your applications will appear here',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
@@ -164,7 +164,7 @@ class _AppCard extends StatelessWidget {
                   children: [
                     Text(
                       a.opportunityTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
@@ -173,7 +173,7 @@ class _AppCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       a.startupName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),

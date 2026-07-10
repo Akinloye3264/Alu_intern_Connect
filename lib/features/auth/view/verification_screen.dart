@@ -2,30 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../models/startup.dart';
 import '../cubit/auth_cubit.dart';
 
 class VerificationScreen extends StatelessWidget {
   final String title;
   final String message;
   final IconData icon;
-  final bool canResendEmail;
 
-  const VerificationScreen.email({super.key, required String email})
-    : title = 'Verify your email',
-      message =
-          'We sent a verification link to $email. Open the link, then '
-          'return here and check your status.',
-      icon = Icons.mark_email_unread_rounded,
-      canResendEmail = true;
-
-  const VerificationScreen.startup({super.key})
-    : title = 'Startup verification pending',
-      message =
-          'Your email is verified. Your company website and registration '
-          'number are awaiting review. You can access the startup dashboard '
-          'after an administrator approves your organization.',
-      icon = Icons.domain_verification_rounded,
-      canResendEmail = false;
+  const VerificationScreen.startup({
+    super.key,
+    StartupVerificationStatus status = StartupVerificationStatus.pending,
+  }) : title = status == StartupVerificationStatus.rejected
+           ? 'Startup application not approved'
+           : 'Startup verification pending',
+       message = status == StartupVerificationStatus.rejected
+           ? "Your startup application wasn't approved. Contact the ALU "
+                 'Intern Connect team if you think this is a mistake.'
+           : 'Your company website and registration number are awaiting '
+                 'review. You can access the startup '
+                 'dashboard after an administrator approves your organization.',
+       icon = status == StartupVerificationStatus.rejected
+           ? Icons.cancel_outlined
+           : Icons.domain_verification_rounded;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +38,7 @@ class VerificationScreen extends StatelessWidget {
               Container(
                 width: 92,
                 height: 92,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.primarySoft,
                   shape: BoxShape.circle,
                 ),
@@ -49,7 +48,7 @@ class VerificationScreen extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -59,7 +58,7 @@ class VerificationScreen extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   height: 1.5,
                 ),
@@ -75,32 +74,6 @@ class VerificationScreen extends StatelessWidget {
                   label: const Text('Check status'),
                 ),
               ),
-              if (canResendEmail) ...[
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () async {
-                    try {
-                      await context.read<AuthCubit>().resendVerificationEmail();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Verification email sent.'),
-                          ),
-                        );
-                      }
-                    } catch (_) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Could not resend yet. Try later.'),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  child: const Text('Resend verification email'),
-                ),
-              ],
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => context.read<AuthCubit>().signOut(),

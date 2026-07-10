@@ -10,6 +10,7 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../../opportunities/cubit/opportunity_cubit.dart';
 import '../../opportunities/cubit/opportunity_state.dart';
 import '../../opportunities/view/post_opportunity_screen.dart';
+import '../../applications/view/applicants_screen.dart';
 
 class StartupHomeScreen extends StatelessWidget {
   final AppUser user;
@@ -59,7 +60,7 @@ class StartupHomeScreen extends StatelessWidget {
                         child: Center(
                           child: Text(
                             state.message,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -80,14 +81,14 @@ class StartupHomeScreen extends StatelessWidget {
                                   color: AppColors.surfaceAlt,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.post_add_rounded,
                                   size: 36,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
+                              Text(
                                 'No postings yet',
                                 style: TextStyle(
                                   color: AppColors.textPrimary,
@@ -96,7 +97,7 @@ class StartupHomeScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Tap + to post your first opportunity',
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
@@ -118,10 +119,23 @@ class StartupHomeScreen extends StatelessWidget {
                             padding: const EdgeInsets.only(
                               bottom: AppSpacing.md,
                             ),
-                            child: OpportunityCard(opportunity: loaded.all[i])
-                                .animate()
-                                .fadeIn(delay: (i * 60).ms, duration: 350.ms)
-                                .slideY(begin: 0.05, end: 0),
+                            child:
+                                OpportunityCard(
+                                      opportunity: loaded.all[i],
+                                      onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => ApplicantsScreen(
+                                            opportunityId:
+                                                loaded.all[i].opportunityId,
+                                            opportunityTitle:
+                                                loaded.all[i].title,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                    .animate()
+                                    .fadeIn(delay: (i * 60).ms, duration: 350.ms)
+                                    .slideY(begin: 0.05, end: 0),
                           ),
                           childCount: loaded.all.length,
                         ),
@@ -171,7 +185,7 @@ class StartupHomeScreen extends StatelessWidget {
                   children: [
                     Text(
                       user.fullName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
@@ -199,7 +213,7 @@ class StartupHomeScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Manage your postings',
                   style: TextStyle(
                     color: AppColors.textSecondary,
@@ -210,7 +224,7 @@ class StartupHomeScreen extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.logout_rounded,
               color: AppColors.textSecondary,
             ),

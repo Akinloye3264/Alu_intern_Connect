@@ -16,15 +16,17 @@ class StudentShell extends StatefulWidget {
 class _StudentShellState extends State<StudentShell> {
   int _index = 0;
 
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ProfileScreen(user: widget.user)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = [
-      StudentHomeScreen(
-        user: widget.user,
-        onProfileTap: () => setState(() => _index = 2),
-      ),
+      StudentHomeScreen(user: widget.user, onProfileTap: _openProfile),
       MyApplicationsScreen(user: widget.user),
-      ProfileScreen(user: widget.user),
     ];
 
     return Scaffold(
@@ -32,7 +34,7 @@ class _StudentShellState extends State<StudentShell> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          border: const Border(top: BorderSide(color: AppColors.border)),
+          border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: NavigationBar(
           selectedIndex: _index,
@@ -42,10 +44,13 @@ class _StudentShellState extends State<StudentShell> {
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: const [
+          destinations: [
             NavigationDestination(
               icon: Icon(Icons.home_outlined, color: AppColors.textSecondary),
-              selectedIcon: Icon(Icons.home_rounded, color: AppColors.primary),
+              selectedIcon: Icon(
+                Icons.home_rounded,
+                color: AppColors.primary,
+              ),
               label: 'Home',
             ),
             NavigationDestination(
@@ -58,14 +63,6 @@ class _StudentShellState extends State<StudentShell> {
                 color: AppColors.primary,
               ),
               label: 'Applications',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline, color: AppColors.textSecondary),
-              selectedIcon: Icon(
-                Icons.person_rounded,
-                color: AppColors.primary,
-              ),
-              label: 'Profile',
             ),
           ],
         ),
