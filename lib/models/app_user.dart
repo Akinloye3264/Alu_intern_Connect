@@ -11,7 +11,6 @@ class AppUser extends Equatable {
   final List<String> skills;
   final String bio;
   final String photoUrl;
-  final String resumeUrl;
   final String resumeFileName;
   final String identityImageUrl;
   final DateTime createdAt;
@@ -24,7 +23,6 @@ class AppUser extends Equatable {
     this.skills = const [],
     this.bio = '',
     this.photoUrl = '',
-    this.resumeUrl = '',
     this.resumeFileName = '',
     this.identityImageUrl = '',
     required this.createdAt,
@@ -38,7 +36,6 @@ class AppUser extends Equatable {
     'skills': skills,
     'bio': bio,
     'photoUrl': photoUrl,
-    'resumeUrl': resumeUrl,
     'resumeFileName': resumeFileName,
     'identityImageUrl': identityImageUrl,
     'createdAt': Timestamp.fromDate(createdAt),
@@ -55,7 +52,6 @@ class AppUser extends Equatable {
     skills: List<String>.from(map['skills'] ?? []),
     bio: map['bio'] ?? '',
     photoUrl: map['photoUrl'] ?? '',
-    resumeUrl: map['resumeUrl'] ?? '',
     resumeFileName: map['resumeFileName'] ?? '',
     identityImageUrl: map['identityImageUrl'] ?? '',
     createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -67,7 +63,6 @@ class AppUser extends Equatable {
     List<String>? skills,
     String? bio,
     String? photoUrl,
-    String? resumeUrl,
     String? resumeFileName,
     String? identityImageUrl,
   }) => AppUser(
@@ -78,7 +73,6 @@ class AppUser extends Equatable {
     skills: skills ?? this.skills,
     bio: bio ?? this.bio,
     photoUrl: photoUrl ?? this.photoUrl,
-    resumeUrl: resumeUrl ?? this.resumeUrl,
     resumeFileName: resumeFileName ?? this.resumeFileName,
     identityImageUrl: identityImageUrl ?? this.identityImageUrl,
     createdAt: createdAt,
@@ -93,7 +87,6 @@ class AppUser extends Equatable {
     skills,
     bio,
     photoUrl,
-    resumeUrl,
     resumeFileName,
     identityImageUrl,
   ];

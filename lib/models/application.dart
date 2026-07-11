@@ -27,7 +27,6 @@ class Application extends Equatable {
   final String startupName;
   final String studentUid;
   final String studentName;
-  final String resumeUrl;
   final List<String> studentSkills;
   final ApplicationStatus status;
   final String message;
@@ -40,7 +39,6 @@ class Application extends Equatable {
     required this.startupName,
     required this.studentUid,
     required this.studentName,
-    this.resumeUrl = '',
     this.studentSkills = const [],
     this.status = ApplicationStatus.applied,
     this.message = '',
@@ -54,7 +52,6 @@ class Application extends Equatable {
     'startupName': startupName,
     'studentUid': studentUid,
     'studentName': studentName,
-    'resumeUrl': resumeUrl,
     'studentSkills': studentSkills,
     'status': status.name,
     'message': message,
@@ -68,7 +65,6 @@ class Application extends Equatable {
     startupName: map['startupName'] ?? '',
     studentUid: map['studentUid'] ?? '',
     studentName: map['studentName'] ?? '',
-    resumeUrl: map['resumeUrl'] ?? '',
     studentSkills: List<String>.from(map['studentSkills'] ?? []),
     status: ApplicationStatus.values.firstWhere(
       (s) => s.name == map['status'],
