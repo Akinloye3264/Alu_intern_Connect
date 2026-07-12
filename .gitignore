@@ -56,3 +56,6 @@ firebase.json
 google-services.json
 GoogleService-Info.plist
 .firebase/
+.claude
+.agents
+.vscode
