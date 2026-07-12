@@ -12,7 +12,6 @@ class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
 
-/// A login request is running while the login form remains mounted.
 class AuthLoginLoading extends AuthState {}
 
 class Authenticated extends AuthState {

@@ -1,10 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
-/// Admin-controlled review status. In the Firebase console this is stored
-/// as a plain string on the startup's document (`startups/{uid}`) — flip it
-/// from "pending" to "approved" to unlock posting for that startup, or set
-/// it to "rejected" to deny the application.
 enum StartupVerificationStatus { pending, approved, rejected }
 
 class Startup extends Equatable {

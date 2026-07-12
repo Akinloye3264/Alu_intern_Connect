@@ -45,9 +45,6 @@ class AuthRepository {
       );
     } on FirebaseAuthException catch (error) {
       if (error.code != 'email-already-in-use') rethrow;
-      // Deleting only the Firestore profile leaves the Firebase Auth account.
-      // Re-authenticate that account and rebuild its profile when the password
-      // supplied by its owner is valid.
       cred = await _auth.signInWithEmailAndPassword(
         email: normalizedEmail,
         password: password,
@@ -138,16 +135,30 @@ class AuthRepository {
         !user.email.trim().toLowerCase().endsWith('@alustudent.com')) {
       throw ArgumentError('Students must use an @alustudent.com email.');
     }
+    final finalUser = user.copyWith(role: role);
+    final batch = _db.batch();
+    batch.set(
+      _db.collection(FirestorePaths.users).doc(finalUser.uid),
+      finalUser.toMap(),
+    );
     if (role == UserRole.startup) {
-      throw ArgumentError(
-        'Startups must use the full signup form for organization verification.',
+      final startup = Startup(
+        startupId: finalUser.uid,
+        ownerUid: finalUser.uid,
+        name: finalUser.fullName,
+        email: finalUser.email,
+        description: '',
+        category: 'Other',
+        website: '',
+        registrationNumber: '',
+        createdAt: DateTime.now(),
+      );
+      batch.set(
+        _db.collection(FirestorePaths.startups).doc(finalUser.uid),
+        startup.toMap(),
       );
     }
-    final finalUser = user.copyWith(role: role);
-    await _db
-        .collection(FirestorePaths.users)
-        .doc(finalUser.uid)
-        .set(finalUser.toMap());
+    await batch.commit();
     return finalUser;
   }
 
@@ -164,15 +175,10 @@ class AuthRepository {
       (provider) => provider.providerId == 'google.com',
     ) ?? false;
     await _auth.signOut();
-    // A user may have signed in with email/password, and the Google plugin can
-    // also be unavailable on some platforms. Neither case should prevent the
-    // Firebase session from being closed.
     if (signedInWithGoogle) {
       try {
         await GoogleSignIn().signOut();
-      } catch (_) {
-        // Firebase Auth is the source of truth for the app session.
-      }
+      } catch (_) {}
     }
   }
 

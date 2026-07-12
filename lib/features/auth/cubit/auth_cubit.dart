@@ -95,18 +95,17 @@ class AuthCubit extends Cubit<AuthState> {
       }
       final existingProfile = await _repo.fetchUserProfile(result.user.uid);
       if (existingProfile == null) {
-        final createdProfile = await _repo.completeGoogleSignUp(
-          result.user,
-          UserRole.student,
-        );
-        emit(Authenticated(createdProfile));
+        final role =
+            result.user.email.trim().toLowerCase().endsWith('@alustudent.com')
+            ? UserRole.student
+            : UserRole.startup;
+        await _repo.completeGoogleSignUp(result.user, role);
+      }
+      final firebaseUser = _repo.currentUser;
+      if (firebaseUser == null) {
+        emit(Unauthenticated());
       } else {
-        final firebaseUser = _repo.currentUser;
-        if (firebaseUser == null) {
-          emit(Unauthenticated());
-        } else {
-          await _resolveSignedInUser(firebaseUser, _authEpoch);
-        }
+        await _resolveSignedInUser(firebaseUser, _authEpoch);
       }
     } on FirebaseAuthException catch (e) {
       emit(AuthError(_mapError(e)));
@@ -132,8 +131,6 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> signOut() async {
     _authEpoch++;
-    // Make logout immediately authoritative in the UI. Any older profile
-    // request is invalidated by the epoch change above.
     emit(Unauthenticated());
     try {
       await _repo.signOut();

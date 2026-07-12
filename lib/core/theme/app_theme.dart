@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Dynamic color palette. The `static const` fields never change between
-/// themes; the getters below them track [isDark] (kept in sync by
-/// `ThemeCubit`) so existing call sites (`AppColors.textPrimary`, etc.)
-/// automatically follow the active theme without being rewritten.
 class AppColors {
   static bool isDark = true;
 
